@@ -1,0 +1,23 @@
+server:
+  port: 8089
+
+management:
+  server:
+    port: 9089
+
+spring:
+  application:
+    name: heart-monitor-api
+  datasource:
+    url: jdbc:h2:mem:heart-monitor-api;DB_CLOSE_DELAY=-1
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  jpa:
+    show-sql: true
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+  sql:
+    init:
+      mode: always

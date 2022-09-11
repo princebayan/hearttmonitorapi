@@ -1,0 +1,37 @@
+plugins {
+	id 'org.springframework.boot' version '2.7.3'
+	id 'io.spring.dependency-management' version '1.0.13.RELEASE'
+	id 'java'
+}
+
+group = 'com.cardiodiagnostics'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.8'
+
+	runtimeOnly 'com.h2database:h2:1.4.200'
+
+
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
+
+	// Swagger Doc
+	implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.6.5'
+
+	compileOnly 'org.projectlombok:lombok'
+
+	annotationProcessor 'org.projectlombok:lombok'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

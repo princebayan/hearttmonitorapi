@@ -1,0 +1,119 @@
+#Workflow name
+name: Heart Monitor Engine Pipeline
+on:
+  #Manually trigger workflow runs
+  workflow_dispatch:
+  #Trigger the workflow on push from the main branch
+  push:
+    branches:
+      - develop
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GITHUB_SHA: ${{ github.sha }}
+  DOCKER_IMAGE: test/heart-monitor-api:1.0.0-dev
+  DEPLOYMENT_NAME: heart-monitor-api
+  REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+  REMOTE_USERNAME: ${{ secrets.REMOTE_USERNAME }}
+  REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+  REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: 11
+          distribution: 'zulu' # See 'Supported distributions' for available options
+
+      # Check id develop branch
+      - name: "Copy Configuration for UAT"
+        run: |
+          ls
+          cp src/main/resources/application-uat.yaml application-uat.yaml
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Run Tests
+        run:  ./gradlew test -i
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: always() # always run even if the previous step fails
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
+      - name: Test marketplace action
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        id: allure-report
+        with:
+          allure_results: build/allure-results
+          gh_pages: gh-pages
+          allure_report: allure-report
+          allure_history: allure-history
+
+      - name: Deploy report to Github Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: allure-history
+
+      - name: Post the link to the report
+        if: always()
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: 'Test report'
+          state: 'success'
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          target_url: https://princebayan.github.io/github-allure-history/${{ github.run_number }}
+
+      # Build the Docker image
+      - name: Build/Publish docker image
+        working-directory: ${{ env.DIR }}
+        run: |
+          ls -a
+          docker build -t "$DOCKER_IMAGE" \
+            --build-arg GITHUB_SHA="$GITHUB_SHA" \
+            --build-arg GITHUB_REF="$GITHUB_REF" .
+
+          docker save -o heart-monitor-api-image.tar "$DOCKER_IMAGE"
+
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USERNAME }}
+          password: ${{ secrets.REMOTE_PASSWORD }}
+          port: ${{ secrets.REMOTE_PORT }}
+          source: "heart-monitor-api-image.tar"
+          target: "images"
+
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USERNAME }}
+          password: ${{ secrets.REMOTE_PASSWORD }}
+          port: ${{ secrets.REMOTE_PORT }}
+          script: |
+            ls -a
+            cd images
+            ls -a
+            docker load -i heart-monitor-api-image.tar
+            docker stop heart-monitor-api
+            docker rm heart-monitor-api
+            docker run -d \
+              -p 8082:8082 \
+              --restart=unless-stopped \
+              --name heart-monitor-api \
+            test/heart-monitor-api:1.0.0-dev
+
+
