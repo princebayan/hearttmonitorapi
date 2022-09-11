@@ -1,7 +1,7 @@
 # Heart-Monitor-API
 [![SpringBoot](https://img.shields.io/badge/Spring_Boot-F2F4F9?style=for-the-badge&logo=spring-boot)](http://projects.spring.io/spring-boot/)
 
-[![Build Status](https://github.com/princebayan/hearttmonitorapi/actions/workflows/transaction-engine-pipeline.yaml/badge.svg)](https://github.com/princebayan/transaction-engine/actions)
+[![Build Status](https://github.com/princebayan/hearttmonitorapi/actions/workflows/heart-monitor-api-pipeline.yaml/badge.svg)](https://github.com/princebayan/transaction-engine/actions)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![Maintenance](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
